@@ -39,8 +39,9 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"msgraph_group":       resourceGroup(),
-			"msgraph_group_owner": resourceGroupOwner(),
+			"msgraph_group":        resourceGroup(),
+			"msgraph_group_owner":  resourceGroupOwner(),
+			"msgraph_group_member": resourceGroupMember(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"msgraph_user": dataSourceUser(),
