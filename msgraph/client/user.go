@@ -6,7 +6,7 @@ const (
 )
 
 type User struct {
-	DisplayName       string `json:"displayName"`
-	Mail              string `json:"mail"`
-	UserPrincipalName string `json:"userPrincipalName"`
+	DisplayName       string `json:"displayName,omitempty"`
+	Mail              string `json:"mail,omitempty"`
+	UserPrincipalName string `json:"userPrincipalName,omitempty"`
 }
