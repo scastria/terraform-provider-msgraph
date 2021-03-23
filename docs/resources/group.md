@@ -24,4 +24,4 @@ resource "msgraph_group" "example" {
 * `mail` - **(String)** The email address of the group if `is_unified` is true
 * `mail_enabled` - **(Boolean)** Same as `is_unified`
 ## Import
-Users can be imported using a proper value of `id` as described above
+Groups can be imported using a proper value of `id` as described above

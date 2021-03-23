@@ -94,7 +94,7 @@ func NewClient(tenantId string, accessToken string, clientId string, clientSecre
 }
 
 func (c *Client) HttpRequest(method string, path string, query url.Values, headerMap http.Header, body *bytes.Buffer) (closer io.ReadCloser, err error) {
-	req, err := http.NewRequest(method, c.requestPath(path), body)
+	req, err := http.NewRequest(method, c.RequestPath(path), body)
 	if err != nil {
 		return nil, &RequestError{StatusCode: http.StatusInternalServerError, Err: err}
 	}
@@ -144,6 +144,6 @@ func (c *Client) HttpRequest(method string, path string, query url.Values, heade
 	return resp.Body, nil
 }
 
-func (c *Client) requestPath(path string) string {
+func (c *Client) RequestPath(path string) string {
 	return fmt.Sprintf("https://%s/v1.0/%s", AzureGraphServer, path)
 }
