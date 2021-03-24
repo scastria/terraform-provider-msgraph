@@ -14,8 +14,8 @@ type GroupMember struct {
 	OdataId  string `json:"@odata.id,omitempty"`
 }
 
-func (grpown *GroupMember) GroupMemberEncodeId() string {
-	return grpown.GroupId + IdSeparator + grpown.MemberId
+func (grpmem *GroupMember) GroupMemberEncodeId() string {
+	return grpmem.GroupId + IdSeparator + grpmem.MemberId
 }
 
 func GroupMemberDecodeId(s string) (string, string) {
