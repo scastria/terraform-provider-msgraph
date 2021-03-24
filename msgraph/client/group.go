@@ -15,4 +15,5 @@ type Group struct {
 	MailEnabled     bool     `json:"mailEnabled"`
 	MailNickname    string   `json:"mailNickname,omitempty"`
 	SecurityEnabled bool     `json:"securityEnabled"`
+	Owners          []string `json:"owners@odata.bind,omitempty"`
 }

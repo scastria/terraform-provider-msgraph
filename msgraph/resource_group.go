@@ -36,6 +36,11 @@ func resourceGroup() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
+			"primary_owner_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
 			"security_enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -77,7 +82,10 @@ func resourceGroupCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	} else {
 		newGroup.GroupTypes = []string{}
 	}
-	fillGroup(&newGroup, d)
+	primaryOwnerId, ok := d.GetOk("primary_owner_id")
+	if ok {
+		newGroup.Owners = []string{c.RequestPath(fmt.Sprintf(client.UserPathGet, primaryOwnerId.(string)))}
+	}
 	err := json.NewEncoder(&buf).Encode(newGroup)
 	if err != nil {
 		d.SetId("")
@@ -102,19 +110,6 @@ func resourceGroupCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("mail", retVal.Mail)
 	d.Set("mail_enabled", retVal.MailEnabled)
 	return diags
-}
-
-func fillGroup(c *client.Group, d *schema.ResourceData) {
-	//a, ok := d.GetOk("attributes")
-	//if ok {
-	//	attributes := a.(map[string]interface{})
-	//	for name, value := range attributes {
-	//		c.Attributes = append(c.Attributes, client.Attribute{
-	//			Name:  name,
-	//			Value: value.(string),
-	//		})
-	//	}
-	//}
 }
 
 func resourceGroupRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -167,7 +162,6 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	} else {
 		upGroup.GroupTypes = []string{}
 	}
-	fillGroup(&upGroup, d)
 	err := json.NewEncoder(&buf).Encode(upGroup)
 	if err != nil {
 		return diag.FromErr(err)
