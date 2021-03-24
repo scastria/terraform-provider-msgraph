@@ -1,8 +1,7 @@
 package client
 
 const (
-	EnterpriseAppPath    = "servicePrincipals"
-	EnterpriseAppPathGet = EnterpriseAppPath + "/%s"
+	EnterpriseAppPath = "servicePrincipals"
 )
 
 type EnterpriseApp struct {

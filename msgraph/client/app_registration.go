@@ -1,8 +1,7 @@
 package client
 
 const (
-	AppRegistrationPath    = "applications"
-	AppRegistrationPathGet = AppRegistrationPath + "/%s"
+	AppRegistrationPath = "applications"
 )
 
 type AppRegistration struct {
