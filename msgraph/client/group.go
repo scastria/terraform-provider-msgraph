@@ -17,3 +17,6 @@ type Group struct {
 	SecurityEnabled bool     `json:"securityEnabled"`
 	Owners          []string `json:"owners@odata.bind,omitempty"`
 }
+type GroupCollection struct {
+	Groups []Group `json:"value"`
+}
