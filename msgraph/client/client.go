@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-http-utils/headers"
-	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -93,7 +92,7 @@ func NewClient(tenantId string, accessToken string, clientId string, clientSecre
 	return c, nil
 }
 
-func (c *Client) HttpRequest(method string, path string, query url.Values, headerMap http.Header, body *bytes.Buffer) (closer io.ReadCloser, err error) {
+func (c *Client) HttpRequest(method string, path string, query url.Values, headerMap http.Header, body *bytes.Buffer) (response *bytes.Buffer, err error) {
 	req, err := http.NewRequest(method, c.RequestPath(path), body)
 	if err != nil {
 		return nil, &RequestError{StatusCode: http.StatusInternalServerError, Err: err}
@@ -133,15 +132,16 @@ func (c *Client) HttpRequest(method string, path string, query url.Values, heade
 	if err != nil {
 		return nil, &RequestError{StatusCode: http.StatusInternalServerError, Err: err}
 	}
+	defer resp.Body.Close()
+	respBody := new(bytes.Buffer)
+	_, err = respBody.ReadFrom(resp.Body)
+	if err != nil {
+		return nil, &RequestError{StatusCode: resp.StatusCode, Err: err}
+	}
 	if (resp.StatusCode < http.StatusOK) || (resp.StatusCode >= http.StatusMultipleChoices) {
-		respBody := new(bytes.Buffer)
-		_, err := respBody.ReadFrom(resp.Body)
-		if err != nil {
-			return nil, &RequestError{StatusCode: resp.StatusCode, Err: err}
-		}
 		return nil, &RequestError{StatusCode: resp.StatusCode, Err: fmt.Errorf("%s", respBody.String())}
 	}
-	return resp.Body, nil
+	return respBody, nil
 }
 
 func (c *Client) RequestPath(path string) string {
