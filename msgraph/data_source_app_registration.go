@@ -72,7 +72,8 @@ func dataSourceAppRegistrationRead(ctx context.Context, d *schema.ResourceData, 
 	}
 	if len(retVal.AppRegistrations) != 1 {
 		d.SetId("")
-		return diag.Errorf("Filter criteria does not result in a single app registration")
+		filters = append(filters, searchDisplayName.(string))
+		return diag.Errorf("Filter criteria does not result in a single app registration: %s", filters)
 	}
 	d.Set("display_name", retVal.AppRegistrations[0].DisplayName)
 	d.Set("app_id", retVal.AppRegistrations[0].AppId)

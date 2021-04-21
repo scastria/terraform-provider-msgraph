@@ -104,7 +104,8 @@ func dataSourceUserRead(ctx context.Context, d *schema.ResourceData, m interface
 	}
 	if len(retVal.Users) != 1 {
 		d.SetId("")
-		return diag.Errorf("Filter criteria does not result in a single user")
+		filters = append(filters, searchDisplayName.(string))
+		return diag.Errorf("Filter criteria does not result in a single user: %s", filters)
 	}
 	d.Set("display_name", retVal.Users[0].DisplayName)
 	d.Set("given_name", retVal.Users[0].GivenName)

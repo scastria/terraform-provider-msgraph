@@ -96,7 +96,8 @@ func dataSourceGroupRead(ctx context.Context, d *schema.ResourceData, m interfac
 	}
 	if len(retVal.Groups) != 1 {
 		d.SetId("")
-		return diag.Errorf("Filter criteria does not result in a single group")
+		filters = append(filters, searchDisplayName.(string))
+		return diag.Errorf("Filter criteria does not result in a single group: %s", filters)
 	}
 	d.Set("display_name", retVal.Groups[0].DisplayName)
 	d.Set("mail_nickname", retVal.Groups[0].MailNickname)

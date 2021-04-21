@@ -84,7 +84,8 @@ func dataSourceEnterpriseAppRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 	if len(retVal.EnterpriseApps) != 1 {
 		d.SetId("")
-		return diag.Errorf("Filter criteria does not result in a single enterprise app")
+		filters = append(filters, searchDisplayName.(string))
+		return diag.Errorf("Filter criteria does not result in a single enterprise app: %s", filters)
 	}
 	d.Set("display_name", retVal.EnterpriseApps[0].DisplayName)
 	d.Set("app_id", retVal.EnterpriseApps[0].AppId)

@@ -98,7 +98,12 @@ func dataSourceEnterpriseAppRoleRead(ctx context.Context, d *schema.ResourceData
 	}
 	if len(filteredRoles2) != 1 {
 		d.SetId("")
-		return diag.Errorf("Filter criteria does not result in a single enterprise app role")
+		filters := []string{
+			searchDisplayName.(string),
+			displayName.(string),
+			description.(string),
+		}
+		return diag.Errorf("Filter criteria does not result in a single enterprise app role: %s", filters)
 	}
 	filteredRoles2[0].EnterpriseAppId = enterpriseAppId
 	d.Set("display_name", filteredRoles2[0].DisplayName)
