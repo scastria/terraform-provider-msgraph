@@ -20,4 +20,5 @@ data "msgraph_group" "example" {
 * `description` - **(String)** The description of the group.
 * `security_enabled` - **(Boolean)** Whether this group can be used for security purposes.
 * `is_unified` - **(Boolean)** Whether this group is the new `Unified` group type.
+* `is_public` - **(Boolean)** Whether this group can be joined without owner's approval.
 * `mail_enabled` - **(Boolean)** Same as `is_unified`

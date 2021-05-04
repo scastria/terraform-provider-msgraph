@@ -19,6 +19,7 @@ resource "msgraph_group" "example" {
 * `description` - **(Required, String)** The description of the group.  Cannot be empty string.
 * `security_enabled` - **(Optional, Boolean)** Whether this group can be used for security purposes.
 * `is_unified` - **(Optional, ForceNew, Boolean)** Whether this group is the new `Unified` group type.
+* `is_public` - **(Optional, Boolean)** Whether this group can be joined without owner's approval. Default: `false`.
 * `primary_owner_id` - **(Optional, ForceNew, String)** An owner can be attached to the group at time of creation.  This property is only used at creation time so any changes forces a new resource.
 ## Attribute Reference
 * `id` - **(String)** Guid

@@ -27,6 +27,8 @@ const (
 	Filter                   = "$filter"
 	FilterValue              = "%s eq '%s'"
 	FilterAnd                = " and "
+	Public                   = "Public"
+	Private                  = "Private"
 )
 
 type Client struct {

@@ -49,6 +49,10 @@ func dataSourceGroup() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
+			"is_public": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -107,6 +111,7 @@ func dataSourceGroupRead(ctx context.Context, d *schema.ResourceData, m interfac
 	d.Set("mail_enabled", retVal.Groups[0].MailEnabled)
 	_, hasUnified := find(retVal.Groups[0].GroupTypes, client.Unified)
 	d.Set("is_unified", hasUnified)
+	d.Set("is_public", retVal.Groups[0].GroupIsPublic())
 	d.SetId(retVal.Groups[0].Id)
 	return diags
 }

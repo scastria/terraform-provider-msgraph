@@ -50,6 +50,10 @@ func resourceGroup() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+			"is_public": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"mail": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -66,12 +70,19 @@ func resourceGroupCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
 	buf := bytes.Buffer{}
+	var visibility string
+	if d.Get("is_public").(bool) {
+		visibility = client.Public
+	} else {
+		visibility = client.Private
+	}
 	newGroup := client.Group{
 		DisplayName:     d.Get("display_name").(string),
 		Description:     d.Get("description").(string),
 		MailNickname:    d.Get("mail_nickname").(string),
 		MailEnabled:     d.Get("is_unified").(bool),
 		SecurityEnabled: d.Get("security_enabled").(bool),
+		Visibility:      visibility,
 	}
 	if (!newGroup.MailEnabled) && (!newGroup.SecurityEnabled) {
 		d.SetId("")
@@ -139,6 +150,7 @@ func resourceGroupRead(ctx context.Context, d *schema.ResourceData, m interface{
 	d.Set("is_unified", hasUnified)
 	d.Set("mail", retVal.Mail)
 	d.Set("mail_enabled", retVal.MailEnabled)
+	d.Set("is_public", retVal.GroupIsPublic())
 	return diags
 }
 
@@ -146,6 +158,12 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
 	buf := bytes.Buffer{}
+	var visibility string
+	if d.Get("is_public").(bool) {
+		visibility = client.Public
+	} else {
+		visibility = client.Private
+	}
 	upGroup := client.Group{
 		Id:              d.Id(),
 		DisplayName:     d.Get("display_name").(string),
@@ -153,6 +171,7 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 		MailNickname:    d.Get("mail_nickname").(string),
 		MailEnabled:     d.Get("is_unified").(bool),
 		SecurityEnabled: d.Get("security_enabled").(bool),
+		Visibility:      visibility,
 	}
 	if (!upGroup.MailEnabled) && (!upGroup.SecurityEnabled) {
 		return diag.Errorf("A non-unified group MUST be security enabled")

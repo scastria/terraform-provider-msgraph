@@ -15,8 +15,13 @@ type Group struct {
 	MailEnabled     bool     `json:"mailEnabled"`
 	MailNickname    string   `json:"mailNickname,omitempty"`
 	SecurityEnabled bool     `json:"securityEnabled"`
+	Visibility      string   `json:"visibility"`
 	Owners          []string `json:"owners@odata.bind,omitempty"`
 }
 type GroupCollection struct {
 	Groups []Group `json:"value"`
+}
+
+func (grp *Group) GroupIsPublic() bool {
+	return (grp.Visibility == "") || (grp.Visibility == Public)
 }
