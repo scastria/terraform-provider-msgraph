@@ -5,12 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/scastria/terraform-provider-msgraph/msgraph/client"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 func dataSourceAppRegistration() *schema.Resource {
@@ -28,6 +32,22 @@ func dataSourceAppRegistration() *schema.Resource {
 			"app_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"wait_until_exists": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"wait_timeout": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      60,
+				ValidateFunc: validation.IntAtLeast(0),
+			},
+			"wait_polling_interval": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      10,
+				ValidateFunc: validation.IntAtLeast(0),
 			},
 		},
 	}
@@ -59,24 +79,73 @@ func dataSourceAppRegistrationRead(ctx context.Context, d *schema.ResourceData, 
 		client.ConsistencyLevel: []string{client.ConsistencyLevelEventual},
 	}
 	requestPath := fmt.Sprintf(client.AppRegistrationPath)
-	body, err := c.HttpRequest(http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
+	waitUntilExists := d.Get("wait_until_exists").(bool)
+	waitTimeout := d.Get("wait_timeout").(int)
+	waitPollingInterval := d.Get("wait_polling_interval").(int)
+	var retVal *client.AppRegistration
+	var err error
+	if waitUntilExists {
+		stateConf := &resource.StateChangeConf{
+			Timeout:      time.Duration(waitTimeout) * time.Second,
+			PollInterval: time.Duration(waitPollingInterval) * time.Second,
+			Pending:      []string{client.WaitNotExists},
+			Target:       []string{client.WaitFound},
+			Refresh: func() (interface{}, string, error) {
+				output, numAppRegs, err := checkAppRegExists(c, requestPath, requestQuery, requestHeaders)
+				if err != nil {
+					return nil, client.WaitError, err
+				} else if numAppRegs > 1 {
+					filters = append(filters, searchDisplayName.(string))
+					err = fmt.Errorf("Filter criteria does not result in a single app registration: %s", filters)
+					return nil, client.WaitError, err
+				} else if numAppRegs == 0 {
+					tflog.Warn(ctx, "[WAIT]  Not exists.  Will try again...", "searchDisplayName", searchDisplayName, "filters", filters)
+					return nil, client.WaitNotExists, nil
+				} else {
+					return output, client.WaitFound, nil
+				}
+			},
+		}
+		output, err2 := stateConf.WaitForStateContext(context.Background())
+		if output != nil {
+			retVal = output.(*client.AppRegistration)
+		}
+		err = err2
+	} else {
+		output, numAppRegs, err2 := checkAppRegExists(c, requestPath, requestQuery, requestHeaders)
+		if err2 != nil {
+			err = err2
+		} else if numAppRegs != 1 {
+			filters = append(filters, searchDisplayName.(string))
+			err = fmt.Errorf("Filter criteria does not result in a single app registration: %s", filters)
+		} else {
+			retVal = output
+		}
+	}
 	if err != nil {
 		d.SetId("")
 		return diag.FromErr(err)
+	}
+	d.Set("display_name", retVal.DisplayName)
+	d.Set("app_id", retVal.AppId)
+	d.SetId(retVal.Id)
+	return diags
+}
+
+func checkAppRegExists(c *client.Client, requestPath string, requestQuery url.Values, requestHeaders http.Header) (*client.AppRegistration, int, error) {
+	body, err := c.HttpRequest(http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
+	if err != nil {
+		return nil, -1, err
 	}
 	retVal := &client.AppRegistrationCollection{}
 	err = json.NewDecoder(body).Decode(retVal)
 	if err != nil {
-		d.SetId("")
-		return diag.FromErr(err)
+		return nil, -1, err
 	}
-	if len(retVal.AppRegistrations) != 1 {
-		d.SetId("")
-		filters = append(filters, searchDisplayName.(string))
-		return diag.Errorf("Filter criteria does not result in a single app registration: %s", filters)
+	numAppRegs := len(retVal.AppRegistrations)
+	if numAppRegs != 1 {
+		return nil, numAppRegs, nil
+	} else {
+		return &(retVal.AppRegistrations[0]), numAppRegs, nil
 	}
-	d.Set("display_name", retVal.AppRegistrations[0].DisplayName)
-	d.Set("app_id", retVal.AppRegistrations[0].AppId)
-	d.SetId(retVal.AppRegistrations[0].Id)
-	return diags
 }
