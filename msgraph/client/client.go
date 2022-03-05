@@ -29,6 +29,9 @@ const (
 	FilterAnd                = " and "
 	Public                   = "Public"
 	Private                  = "Private"
+	WaitNotExists            = "NotExists"
+	WaitFound                = "Found"
+	WaitError                = "Error"
 )
 
 type Client struct {
