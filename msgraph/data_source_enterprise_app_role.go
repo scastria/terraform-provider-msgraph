@@ -5,11 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/scastria/terraform-provider-msgraph/msgraph/client"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func dataSourceEnterpriseAppRole() *schema.Resource {
@@ -32,6 +36,22 @@ func dataSourceEnterpriseAppRole() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"wait_until_exists": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"wait_timeout": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      60,
+				ValidateFunc: validation.IntAtLeast(0),
+			},
+			"wait_polling_interval": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      10,
+				ValidateFunc: validation.IntAtLeast(0),
+			},
 		},
 	}
 }
@@ -42,21 +62,71 @@ func dataSourceEnterpriseAppRoleRead(ctx context.Context, d *schema.ResourceData
 	c := m.(*client.Client)
 	//app roles do not support searching and filtering so do it manually after reading all roles
 	requestPath := fmt.Sprintf(client.EnterpriseAppRolePath, enterpriseAppId)
-	body, err := c.HttpRequest(http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
+	waitUntilExists := d.Get("wait_until_exists").(bool)
+	waitTimeout := d.Get("wait_timeout").(int)
+	waitPollingInterval := d.Get("wait_polling_interval").(int)
+	var retVal *client.EnterpriseAppRole
+	var err error
+	if waitUntilExists {
+		stateConf := &resource.StateChangeConf{
+			Timeout:      time.Duration(waitTimeout) * time.Second,
+			PollInterval: time.Duration(waitPollingInterval) * time.Second,
+			Pending:      []string{client.WaitNotExists},
+			Target:       []string{client.WaitFound},
+			Refresh: func() (interface{}, string, error) {
+				output, numEnterpriseAppRoles, err := checkEnterpriseAppRoleExists(d, c, requestPath)
+				if err != nil {
+					return nil, client.WaitError, err
+				} else if numEnterpriseAppRoles > 1 {
+					err = fmt.Errorf("Filter criteria does not result in a single enterprise app role: %s", getFilterString(d))
+					return nil, client.WaitError, err
+				} else if numEnterpriseAppRoles == 0 {
+					tflog.Warn(ctx, "[WAIT]  Not exists.  Will try again...", "filters", getFilterString(d))
+					return nil, client.WaitNotExists, nil
+				} else {
+					return output, client.WaitFound, nil
+				}
+			},
+		}
+		output, err2 := stateConf.WaitForStateContext(context.Background())
+		if output != nil {
+			retVal = output.(*client.EnterpriseAppRole)
+		}
+		err = err2
+	} else {
+		output, numEnterpriseAppRoles, err2 := checkEnterpriseAppRoleExists(d, c, requestPath)
+		if err2 != nil {
+			err = err2
+		} else if numEnterpriseAppRoles != 1 {
+			err = fmt.Errorf("Filter criteria does not result in a single enterprise app role: %s", getFilterString(d))
+		} else {
+			retVal = output
+		}
+	}
 	if err != nil {
 		d.SetId("")
 		return diag.FromErr(err)
+	}
+	retVal.EnterpriseAppId = enterpriseAppId
+	d.Set("display_name", retVal.DisplayName)
+	d.Set("description", retVal.Description)
+	d.SetId(retVal.EnterpriseAppRoleEncodeId())
+	return diags
+}
+
+func checkEnterpriseAppRoleExists(d *schema.ResourceData, c *client.Client, requestPath string) (*client.EnterpriseAppRole, int, error) {
+	body, err := c.HttpRequest(http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
+	if err != nil {
+		return nil, -1, err
 	}
 	retVal := &client.EnterpriseAppRoleCollection{}
 	err = json.NewDecoder(body).Decode(retVal)
 	if err != nil {
-		d.SetId("")
-		return diag.FromErr(err)
+		return nil, -1, err
 	}
 	//Check for a quick exit
 	if len(retVal.EnterpriseAppRoles) == 0 {
-		d.SetId("")
-		return diag.Errorf("Filter criteria does not result in a single enterprise app role")
+		return nil, 0, nil
 	}
 	//Do manual searching
 	searchedRoles := []client.EnterpriseAppRole{}
@@ -96,18 +166,25 @@ func dataSourceEnterpriseAppRoleRead(ctx context.Context, d *schema.ResourceData
 	} else {
 		filteredRoles2 = filteredRoles1
 	}
-	if len(filteredRoles2) != 1 {
-		d.SetId("")
-		filters := []string{
-			searchDisplayName.(string),
-			displayName.(string),
-			description.(string),
-		}
-		return diag.Errorf("Filter criteria does not result in a single enterprise app role: %s", filters)
+	numRoles := len(filteredRoles2)
+	if numRoles != 1 {
+		return nil, numRoles, nil
+	} else {
+		return &(filteredRoles2[0]), numRoles, nil
 	}
-	filteredRoles2[0].EnterpriseAppId = enterpriseAppId
-	d.Set("display_name", filteredRoles2[0].DisplayName)
-	d.Set("description", filteredRoles2[0].Description)
-	d.SetId(filteredRoles2[0].EnterpriseAppRoleEncodeId())
-	return diags
+}
+
+func getFilterString(d *schema.ResourceData) []string {
+	searchDisplayName := d.Get("search_display_name")
+	displayName := d.Get("display_name")
+	description := d.Get("description")
+	retVal := []string{
+		"search_display_name:",
+		searchDisplayName.(string),
+		"display_name:",
+		displayName.(string),
+		"description:",
+		description.(string),
+	}
+	return retVal
 }

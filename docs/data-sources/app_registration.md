@@ -14,5 +14,8 @@ data "msgraph_app_registration" "example" {
 * `search_display_name` - **(Optional, String)** The search string to apply to the display name of the app registration. Uses contains.
 * `display_name` - **(Optional, String)** The filter string to apply to the display name of the app registration. Uses equality.
 * `app_id` - **(Optional, String)** The filter string to apply to the app id of the app registration. Uses equality.
+* `wait_until_exists` - **(Optional, Boolean)** Whether to wait and keep checking for existence of the app registration instead of immediately returning an error.  Default: `false`
+* `wait_timeout` - **(Optional, Integer)** How many total seconds to wait for existence until giving up.  Default: `60`
+* `wait_polling_interval` - **(Optional, Integer)** How many seconds to wait between existence checks.  Default: `10`
 ## Attribute Reference
 * `id` - **(String)** Guid
