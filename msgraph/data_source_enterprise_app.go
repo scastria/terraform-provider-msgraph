@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/scastria/terraform-provider-msgraph/msgraph/client"
+	"math"
 	"net/http"
 	"net/url"
 	"strings"
@@ -98,10 +99,11 @@ func dataSourceEnterpriseAppRead(ctx context.Context, d *schema.ResourceData, m 
 	var err error
 	if waitUntilExists {
 		stateConf := &resource.StateChangeConf{
-			Timeout:      time.Duration(waitTimeout) * time.Second,
-			PollInterval: time.Duration(waitPollingInterval) * time.Second,
-			Pending:      []string{client.WaitNotExists},
-			Target:       []string{client.WaitFound},
+			Timeout:        time.Duration(waitTimeout) * time.Second,
+			PollInterval:   time.Duration(waitPollingInterval) * time.Second,
+			Pending:        []string{client.WaitNotExists},
+			Target:         []string{client.WaitFound},
+			NotFoundChecks: math.MaxInt,
 			Refresh: func() (interface{}, string, error) {
 				output, numEnterpriseApps, err := checkEnterpriseAppExists(c, requestPath, requestQuery, requestHeaders)
 				if err != nil {
