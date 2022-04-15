@@ -10,6 +10,11 @@ resource "msgraph_app_registration" "TestAppReg" {
 }
 resource "msgraph_enterprise_app" "example" {
   app_id = msgraph_app_registration.TestAppReg.app_id
+  app_role {
+    display_name = "TestRole"
+    description = "TestRole"
+    allowed_member_types = ["User"]
+  }
 }
 ```
 ## Argument Reference
