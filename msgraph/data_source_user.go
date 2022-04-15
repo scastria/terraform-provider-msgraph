@@ -125,7 +125,7 @@ func dataSourceUserRead(ctx context.Context, d *schema.ResourceData, m interface
 			Target:         []string{client.WaitFound},
 			NotFoundChecks: math.MaxInt,
 			Refresh: func() (interface{}, string, error) {
-				output, numUsers, err := checkUserExists(c, requestPath, requestQuery, requestHeaders)
+				output, numUsers, err := checkUserExists(ctx, c, requestPath, requestQuery, requestHeaders)
 				if err != nil {
 					return nil, client.WaitError, err
 				} else if numUsers > 1 {
@@ -146,7 +146,7 @@ func dataSourceUserRead(ctx context.Context, d *schema.ResourceData, m interface
 		}
 		err = err2
 	} else {
-		output, numUsers, err2 := checkUserExists(c, requestPath, requestQuery, requestHeaders)
+		output, numUsers, err2 := checkUserExists(ctx, c, requestPath, requestQuery, requestHeaders)
 		if err2 != nil {
 			err = err2
 		} else if numUsers != 1 {
@@ -170,8 +170,8 @@ func dataSourceUserRead(ctx context.Context, d *schema.ResourceData, m interface
 	return diags
 }
 
-func checkUserExists(c *client.Client, requestPath string, requestQuery url.Values, requestHeaders http.Header) (*client.User, int, error) {
-	body, err := c.HttpRequest(http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
+func checkUserExists(ctx context.Context, c *client.Client, requestPath string, requestQuery url.Values, requestHeaders http.Header) (*client.User, int, error) {
+	body, err := c.HttpRequest(ctx, http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
 	if err != nil {
 		return nil, -1, err
 	}

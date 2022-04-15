@@ -2,10 +2,11 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/go-http-utils/headers"
-	"log"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -42,7 +43,7 @@ type Client struct {
 	httpClient   *http.Client
 }
 
-func NewClient(tenantId string, accessToken string, clientId string, clientSecret string) (client *Client, err error) {
+func NewClient(ctx context.Context, tenantId string, accessToken string, clientId string, clientSecret string) (client *Client, err error) {
 	c := &Client{
 		tenantId:     tenantId,
 		accessToken:  accessToken,
@@ -52,7 +53,7 @@ func NewClient(tenantId string, accessToken string, clientId string, clientSecre
 	}
 	//Check for client credentials authentication and try to get access token
 	if c.accessToken == "" {
-		log.Print("Microsoft Graph API: Obtaining access token...")
+		tflog.Info(ctx, "Microsoft Graph API: Obtaining access token...")
 		requestURL := fmt.Sprintf("https://%s/%s/oauth2/v2.0/token", AzureAuthServer, c.tenantId)
 		requestForm := url.Values{
 			"grant_type":    []string{"client_credentials"},
@@ -67,10 +68,9 @@ func NewClient(tenantId string, accessToken string, clientId string, clientSecre
 		req.Header.Set(headers.ContentType, FormEncoded)
 		requestDump, err := httputil.DumpRequest(req, true)
 		if err != nil {
-			log.Print("Microsoft Graph API:")
-			log.Print(err)
+			tflog.Info(ctx, "Microsoft Graph API:", "error", err)
 		} else {
-			log.Print("Microsoft Graph API: " + string(requestDump))
+			tflog.Info(ctx, "Microsoft Graph API: ", "request", string(requestDump))
 		}
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
@@ -90,14 +90,14 @@ func NewClient(tenantId string, accessToken string, clientId string, clientSecre
 		if err != nil {
 			return nil, err
 		}
-		log.Print("Microsoft Graph API: Received access token: " + token.AccessToken)
+		tflog.Info(ctx, "Microsoft Graph API: Received access token: ", "token", token.AccessToken)
 		//Inject token as access_token for client for all future calls
 		c.accessToken = token.AccessToken
 	}
 	return c, nil
 }
 
-func (c *Client) HttpRequest(method string, path string, query url.Values, headerMap http.Header, body *bytes.Buffer) (response *bytes.Buffer, err error) {
+func (c *Client) HttpRequest(ctx context.Context, method string, path string, query url.Values, headerMap http.Header, body *bytes.Buffer) (response *bytes.Buffer, err error) {
 	req, err := http.NewRequest(method, c.RequestPath(path), body)
 	if err != nil {
 		return nil, &RequestError{StatusCode: http.StatusInternalServerError, Err: err}
@@ -128,10 +128,9 @@ func (c *Client) HttpRequest(method string, path string, query url.Values, heade
 	}
 	requestDump, err := httputil.DumpRequest(req, true)
 	if err != nil {
-		log.Print("Microsoft Graph API:")
-		log.Print(err)
+		tflog.Info(ctx, "Microsoft Graph API:", "error", err)
 	} else {
-		log.Print("Microsoft Graph API: " + string(requestDump))
+		tflog.Info(ctx, "Microsoft Graph API: ", "request", string(requestDump))
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

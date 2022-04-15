@@ -56,7 +56,7 @@ func resourceGroupRoleAssignmentCreate(ctx context.Context, d *schema.ResourceDa
 	requestHeaders := http.Header{
 		headers.ContentType: []string{client.ApplicationJson},
 	}
-	body, err := c.HttpRequest(http.MethodPost, requestPath, nil, requestHeaders, &buf)
+	body, err := c.HttpRequest(ctx, http.MethodPost, requestPath, nil, requestHeaders, &buf)
 	if err != nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -77,7 +77,7 @@ func resourceGroupRoleAssignmentRead(ctx context.Context, d *schema.ResourceData
 	groupId, assignmentId := client.GroupRoleAssignmentDecodeId(d.Id())
 	c := m.(*client.Client)
 	requestPath := fmt.Sprintf(client.GroupRoleAssignmentPathGet, groupId, assignmentId)
-	body, err := c.HttpRequest(http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
+	body, err := c.HttpRequest(ctx, http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
 	if err != nil {
 		d.SetId("")
 		re := err.(*client.RequestError)
@@ -106,7 +106,7 @@ func resourceGroupRoleAssignmentDelete(ctx context.Context, d *schema.ResourceDa
 	groupId, assignmentId := client.GroupRoleAssignmentDecodeId(d.Id())
 	c := m.(*client.Client)
 	requestPath := fmt.Sprintf(client.GroupRoleAssignmentPathGet, groupId, assignmentId)
-	_, err := c.HttpRequest(http.MethodDelete, requestPath, nil, nil, &bytes.Buffer{})
+	_, err := c.HttpRequest(ctx, http.MethodDelete, requestPath, nil, nil, &bytes.Buffer{})
 	if err != nil {
 		return diag.FromErr(err)
 	}

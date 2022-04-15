@@ -43,6 +43,8 @@ func Provider() *schema.Provider {
 			"msgraph_group_owner":           resourceGroupOwner(),
 			"msgraph_group_member":          resourceGroupMember(),
 			"msgraph_group_role_assignment": resourceGroupRoleAssignment(),
+			"msgraph_app_registration":      resourceAppRegistration(),
+			"msgraph_enterprise_app":        resourceEnterpriseApp(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"msgraph_user":                dataSourceUser(),
@@ -67,7 +69,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	}
 
 	var diags diag.Diagnostics
-	c, err := client.NewClient(tenantId, accessToken, clientId, clientSecret)
+	c, err := client.NewClient(ctx, tenantId, accessToken, clientId, clientSecret)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}

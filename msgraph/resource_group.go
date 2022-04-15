@@ -106,7 +106,7 @@ func resourceGroupCreate(ctx context.Context, d *schema.ResourceData, m interfac
 	requestHeaders := http.Header{
 		headers.ContentType: []string{client.ApplicationJson},
 	}
-	body, err := c.HttpRequest(http.MethodPost, requestPath, nil, requestHeaders, &buf)
+	body, err := c.HttpRequest(ctx, http.MethodPost, requestPath, nil, requestHeaders, &buf)
 	if err != nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -127,7 +127,7 @@ func resourceGroupRead(ctx context.Context, d *schema.ResourceData, m interface{
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
 	requestPath := fmt.Sprintf(client.GroupPathGet, d.Id())
-	body, err := c.HttpRequest(http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
+	body, err := c.HttpRequest(ctx, http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
 	if err != nil {
 		d.SetId("")
 		re := err.(*client.RequestError)
@@ -189,7 +189,7 @@ func resourceGroupUpdate(ctx context.Context, d *schema.ResourceData, m interfac
 	requestHeaders := http.Header{
 		headers.ContentType: []string{client.ApplicationJson},
 	}
-	_, err = c.HttpRequest(http.MethodPatch, requestPath, nil, requestHeaders, &buf)
+	_, err = c.HttpRequest(ctx, http.MethodPatch, requestPath, nil, requestHeaders, &buf)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -200,7 +200,7 @@ func resourceGroupDelete(ctx context.Context, d *schema.ResourceData, m interfac
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
 	requestPath := fmt.Sprintf(client.GroupPathGet, d.Id())
-	_, err := c.HttpRequest(http.MethodDelete, requestPath, nil, nil, &bytes.Buffer{})
+	_, err := c.HttpRequest(ctx, http.MethodDelete, requestPath, nil, nil, &bytes.Buffer{})
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -19,6 +19,5 @@ data "msgraph_enerprise_app" "example" {
 * `wait_polling_interval` - **(Optional, Integer)** How many seconds to wait between existence checks.  Default: `10`
 ## Attribute Reference
 * `id` - **(String)** Guid
-* `app_display_name` - **(String)** The app display name of the enterprise app.
 * `login_url` - **(String)** The login url of the enterprise app.
 * `logout_url` - **(String)** The logout url of the enterprise app.

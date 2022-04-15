@@ -121,7 +121,7 @@ func dataSourceGroupRead(ctx context.Context, d *schema.ResourceData, m interfac
 			Target:         []string{client.WaitFound},
 			NotFoundChecks: math.MaxInt,
 			Refresh: func() (interface{}, string, error) {
-				output, numGroups, err := checkGroupExists(c, requestPath, requestQuery, requestHeaders)
+				output, numGroups, err := checkGroupExists(ctx, c, requestPath, requestQuery, requestHeaders)
 				if err != nil {
 					return nil, client.WaitError, err
 				} else if numGroups > 1 {
@@ -142,7 +142,7 @@ func dataSourceGroupRead(ctx context.Context, d *schema.ResourceData, m interfac
 		}
 		err = err2
 	} else {
-		output, numGroups, err2 := checkGroupExists(c, requestPath, requestQuery, requestHeaders)
+		output, numGroups, err2 := checkGroupExists(ctx, c, requestPath, requestQuery, requestHeaders)
 		if err2 != nil {
 			err = err2
 		} else if numGroups != 1 {
@@ -169,8 +169,8 @@ func dataSourceGroupRead(ctx context.Context, d *schema.ResourceData, m interfac
 	return diags
 }
 
-func checkGroupExists(c *client.Client, requestPath string, requestQuery url.Values, requestHeaders http.Header) (*client.Group, int, error) {
-	body, err := c.HttpRequest(http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
+func checkGroupExists(ctx context.Context, c *client.Client, requestPath string, requestQuery url.Values, requestHeaders http.Header) (*client.Group, int, error) {
+	body, err := c.HttpRequest(ctx, http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
 	if err != nil {
 		return nil, -1, err
 	}

@@ -93,7 +93,7 @@ func dataSourceAppRegistrationRead(ctx context.Context, d *schema.ResourceData, 
 			Target:         []string{client.WaitFound},
 			NotFoundChecks: math.MaxInt,
 			Refresh: func() (interface{}, string, error) {
-				output, numAppRegs, err := checkAppRegExists(c, requestPath, requestQuery, requestHeaders)
+				output, numAppRegs, err := checkAppRegExists(ctx, c, requestPath, requestQuery, requestHeaders)
 				if err != nil {
 					return nil, client.WaitError, err
 				} else if numAppRegs > 1 {
@@ -114,7 +114,7 @@ func dataSourceAppRegistrationRead(ctx context.Context, d *schema.ResourceData, 
 		}
 		err = err2
 	} else {
-		output, numAppRegs, err2 := checkAppRegExists(c, requestPath, requestQuery, requestHeaders)
+		output, numAppRegs, err2 := checkAppRegExists(ctx, c, requestPath, requestQuery, requestHeaders)
 		if err2 != nil {
 			err = err2
 		} else if numAppRegs != 1 {
@@ -134,8 +134,8 @@ func dataSourceAppRegistrationRead(ctx context.Context, d *schema.ResourceData, 
 	return diags
 }
 
-func checkAppRegExists(c *client.Client, requestPath string, requestQuery url.Values, requestHeaders http.Header) (*client.AppRegistration, int, error) {
-	body, err := c.HttpRequest(http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
+func checkAppRegExists(ctx context.Context, c *client.Client, requestPath string, requestQuery url.Values, requestHeaders http.Header) (*client.AppRegistration, int, error) {
+	body, err := c.HttpRequest(ctx, http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
 	if err != nil {
 		return nil, -1, err
 	}

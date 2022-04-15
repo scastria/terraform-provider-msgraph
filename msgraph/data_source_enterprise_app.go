@@ -50,10 +50,6 @@ func dataSourceEnterpriseApp() *schema.Resource {
 				Default:      10,
 				ValidateFunc: validation.IntAtLeast(0),
 			},
-			"app_display_name": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
 			"login_url": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -105,7 +101,7 @@ func dataSourceEnterpriseAppRead(ctx context.Context, d *schema.ResourceData, m 
 			Target:         []string{client.WaitFound},
 			NotFoundChecks: math.MaxInt,
 			Refresh: func() (interface{}, string, error) {
-				output, numEnterpriseApps, err := checkEnterpriseAppExists(c, requestPath, requestQuery, requestHeaders)
+				output, numEnterpriseApps, err := checkEnterpriseAppExists(ctx, c, requestPath, requestQuery, requestHeaders)
 				if err != nil {
 					return nil, client.WaitError, err
 				} else if numEnterpriseApps > 1 {
@@ -126,7 +122,7 @@ func dataSourceEnterpriseAppRead(ctx context.Context, d *schema.ResourceData, m 
 		}
 		err = err2
 	} else {
-		output, numEnterpriseApps, err2 := checkEnterpriseAppExists(c, requestPath, requestQuery, requestHeaders)
+		output, numEnterpriseApps, err2 := checkEnterpriseAppExists(ctx, c, requestPath, requestQuery, requestHeaders)
 		if err2 != nil {
 			err = err2
 		} else if numEnterpriseApps != 1 {
@@ -142,15 +138,14 @@ func dataSourceEnterpriseAppRead(ctx context.Context, d *schema.ResourceData, m 
 	}
 	d.Set("display_name", retVal.DisplayName)
 	d.Set("app_id", retVal.AppId)
-	d.Set("app_display_name", retVal.AppDisplayName)
 	d.Set("login_url", retVal.LoginUrl)
 	d.Set("logout_url", retVal.LogoutUrl)
 	d.SetId(retVal.Id)
 	return diags
 }
 
-func checkEnterpriseAppExists(c *client.Client, requestPath string, requestQuery url.Values, requestHeaders http.Header) (*client.EnterpriseApp, int, error) {
-	body, err := c.HttpRequest(http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
+func checkEnterpriseAppExists(ctx context.Context, c *client.Client, requestPath string, requestQuery url.Values, requestHeaders http.Header) (*client.EnterpriseApp, int, error) {
+	body, err := c.HttpRequest(ctx, http.MethodGet, requestPath, requestQuery, requestHeaders, &bytes.Buffer{})
 	if err != nil {
 		return nil, -1, err
 	}

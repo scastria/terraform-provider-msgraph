@@ -53,7 +53,7 @@ func resourceGroupMemberCreate(ctx context.Context, d *schema.ResourceData, m in
 	requestHeaders := http.Header{
 		headers.ContentType: []string{client.ApplicationJson},
 	}
-	_, err = c.HttpRequest(http.MethodPost, requestPath, nil, requestHeaders, &buf)
+	_, err = c.HttpRequest(ctx, http.MethodPost, requestPath, nil, requestHeaders, &buf)
 	if err != nil {
 		d.SetId("")
 		return diag.FromErr(err)
@@ -67,7 +67,7 @@ func resourceGroupMemberRead(ctx context.Context, d *schema.ResourceData, m inte
 	groupId, memberId := client.GroupMemberDecodeId(d.Id())
 	c := m.(*client.Client)
 	requestPath := fmt.Sprintf(client.GroupMemberPath, groupId)
-	body, err := c.HttpRequest(http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
+	body, err := c.HttpRequest(ctx, http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
 	if err != nil {
 		d.SetId("")
 		re := err.(*client.RequestError)
@@ -105,7 +105,7 @@ func resourceGroupMemberDelete(ctx context.Context, d *schema.ResourceData, m in
 	groupId, memberId := client.GroupMemberDecodeId(d.Id())
 	c := m.(*client.Client)
 	requestPath := fmt.Sprintf(client.GroupMemberPathDelete, groupId, memberId)
-	_, err := c.HttpRequest(http.MethodDelete, requestPath, nil, nil, &bytes.Buffer{})
+	_, err := c.HttpRequest(ctx, http.MethodDelete, requestPath, nil, nil, &bytes.Buffer{})
 	if err != nil {
 		return diag.FromErr(err)
 	}

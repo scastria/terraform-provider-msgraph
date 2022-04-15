@@ -76,7 +76,7 @@ func dataSourceEnterpriseAppRoleRead(ctx context.Context, d *schema.ResourceData
 			Target:         []string{client.WaitFound},
 			NotFoundChecks: math.MaxInt,
 			Refresh: func() (interface{}, string, error) {
-				output, numEnterpriseAppRoles, err := checkEnterpriseAppRoleExists(d, c, requestPath)
+				output, numEnterpriseAppRoles, err := checkEnterpriseAppRoleExists(ctx, d, c, requestPath)
 				if err != nil {
 					return nil, client.WaitError, err
 				} else if numEnterpriseAppRoles > 1 {
@@ -96,7 +96,7 @@ func dataSourceEnterpriseAppRoleRead(ctx context.Context, d *schema.ResourceData
 		}
 		err = err2
 	} else {
-		output, numEnterpriseAppRoles, err2 := checkEnterpriseAppRoleExists(d, c, requestPath)
+		output, numEnterpriseAppRoles, err2 := checkEnterpriseAppRoleExists(ctx, d, c, requestPath)
 		if err2 != nil {
 			err = err2
 		} else if numEnterpriseAppRoles != 1 {
@@ -116,8 +116,8 @@ func dataSourceEnterpriseAppRoleRead(ctx context.Context, d *schema.ResourceData
 	return diags
 }
 
-func checkEnterpriseAppRoleExists(d *schema.ResourceData, c *client.Client, requestPath string) (*client.EnterpriseAppRole, int, error) {
-	body, err := c.HttpRequest(http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
+func checkEnterpriseAppRoleExists(ctx context.Context, d *schema.ResourceData, c *client.Client, requestPath string) (*client.EnterpriseAppRole, int, error) {
+	body, err := c.HttpRequest(ctx, http.MethodGet, requestPath, nil, nil, &bytes.Buffer{})
 	if err != nil {
 		return nil, -1, err
 	}
