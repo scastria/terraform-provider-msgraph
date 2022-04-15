@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/scastria/terraform-provider-msgraph/msgraph/client"
 	"net/http"
 )
@@ -41,7 +42,8 @@ func resourceEnterpriseApp() *schema.Resource {
 							Type:     schema.TypeSet,
 							Required: true,
 							Elem: &schema.Schema{
-								Type: schema.TypeString,
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringInSlice([]string{"User", "Application"}, false),
 							},
 						},
 						"display_name": {
@@ -139,6 +141,8 @@ func fillEnterpriseApp(c *client.EnterpriseApp, d *schema.ResourceData) {
 	appRoles, ok := d.GetOk("app_role")
 	if ok {
 		c.AppRoles = expandAppRoles(appRoles.(*schema.Set))
+	} else {
+		c.AppRoles = []client.AppRole{}
 	}
 }
 

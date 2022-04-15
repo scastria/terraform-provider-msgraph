@@ -13,7 +13,7 @@ type EnterpriseApp struct {
 	LoginUrl    string    `json:"loginUrl,omitempty"`
 	LogoutUrl   string    `json:"logoutUrl,omitempty"`
 	Tags        []string  `json:"tags,omitempty"`
-	AppRoles    []AppRole `json:"appRoles,omitempty"`
+	AppRoles    []AppRole `json:"appRoles"`
 }
 type AppRoles struct {
 	AppRoles []AppRole `json:"appRoles,omitempty"`
