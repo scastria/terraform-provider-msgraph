@@ -101,7 +101,7 @@ func dataSourceAppRegistrationRead(ctx context.Context, d *schema.ResourceData, 
 					err = fmt.Errorf("Filter criteria does not result in a single app registration: %s", filters)
 					return nil, client.WaitError, err
 				} else if numAppRegs == 0 {
-					tflog.Warn(ctx, "[WAIT]  Not exists.  Will try again...", "searchDisplayName", searchDisplayName, "filters", filters)
+					tflog.Warn(ctx, "[WAIT]  Not exists.  Will try again...", map[string]interface{}{"searchDisplayName": searchDisplayName, "filters": filters})
 					return nil, client.WaitNotExists, nil
 				} else {
 					return output, client.WaitFound, nil

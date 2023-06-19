@@ -68,9 +68,9 @@ func NewClient(ctx context.Context, tenantId string, accessToken string, clientI
 		req.Header.Set(headers.ContentType, FormEncoded)
 		requestDump, err := httputil.DumpRequest(req, true)
 		if err != nil {
-			tflog.Info(ctx, "Microsoft Graph API:", "error", err)
+			tflog.Info(ctx, "Microsoft Graph API:", map[string]interface{}{"error": err})
 		} else {
-			tflog.Info(ctx, "Microsoft Graph API: ", "request", string(requestDump))
+			tflog.Info(ctx, "Microsoft Graph API: ", map[string]interface{}{"request": string(requestDump)})
 		}
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
@@ -90,7 +90,7 @@ func NewClient(ctx context.Context, tenantId string, accessToken string, clientI
 		if err != nil {
 			return nil, err
 		}
-		tflog.Info(ctx, "Microsoft Graph API: Received access token: ", "token", token.AccessToken)
+		tflog.Info(ctx, "Microsoft Graph API: Received access token: ", map[string]interface{}{"token": token.AccessToken})
 		//Inject token as access_token for client for all future calls
 		c.accessToken = token.AccessToken
 	}
@@ -128,9 +128,9 @@ func (c *Client) HttpRequest(ctx context.Context, method string, path string, qu
 	}
 	requestDump, err := httputil.DumpRequest(req, true)
 	if err != nil {
-		tflog.Info(ctx, "Microsoft Graph API:", "error", err)
+		tflog.Info(ctx, "Microsoft Graph API:", map[string]interface{}{"error": err})
 	} else {
-		tflog.Info(ctx, "Microsoft Graph API: ", "request", string(requestDump))
+		tflog.Info(ctx, "Microsoft Graph API: ", map[string]interface{}{"request": string(requestDump)})
 	}
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

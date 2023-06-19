@@ -3,7 +3,9 @@ package client
 import "strings"
 
 const (
-	EnterpriseAppRolePath = "servicePrincipals/%s/appRoles"
+	EnterpriseAppRolePath              = "servicePrincipals/%s/appRoles"
+	EnterpriseAppRoleDefaultAccessId   = "00000000-0000-0000-0000-000000000000"
+	EnterpriseAppRoleDefaultAccessName = "Default Access"
 )
 
 type EnterpriseAppRole struct {

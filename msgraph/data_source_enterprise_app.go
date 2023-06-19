@@ -109,7 +109,7 @@ func dataSourceEnterpriseAppRead(ctx context.Context, d *schema.ResourceData, m 
 					err = fmt.Errorf("Filter criteria does not result in a single enterprise app: %s", filters)
 					return nil, client.WaitError, err
 				} else if numEnterpriseApps == 0 {
-					tflog.Warn(ctx, "[WAIT]  Not exists.  Will try again...", "searchDisplayName", searchDisplayName, "filters", filters)
+					tflog.Warn(ctx, "[WAIT]  Not exists.  Will try again...", map[string]interface{}{"searchDisplayName": searchDisplayName, "filters": filters})
 					return nil, client.WaitNotExists, nil
 				} else {
 					return output, client.WaitFound, nil

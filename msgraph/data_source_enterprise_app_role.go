@@ -25,6 +25,10 @@ func dataSourceEnterpriseAppRole() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"is_default_access": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"search_display_name": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -60,54 +64,63 @@ func dataSourceEnterpriseAppRole() *schema.Resource {
 func dataSourceEnterpriseAppRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	enterpriseAppId := d.Get("enterprise_app_id").(string)
-	c := m.(*client.Client)
-	//app roles do not support searching and filtering so do it manually after reading all roles
-	requestPath := fmt.Sprintf(client.EnterpriseAppRolePath, enterpriseAppId)
-	waitUntilExists := d.Get("wait_until_exists").(bool)
-	waitTimeout := d.Get("wait_timeout").(int)
-	waitPollingInterval := d.Get("wait_polling_interval").(int)
+	isDefaultAccess := d.Get("is_default_access").(bool)
 	var retVal *client.EnterpriseAppRole
-	var err error
-	if waitUntilExists {
-		stateConf := &resource.StateChangeConf{
-			Timeout:        time.Duration(waitTimeout) * time.Second,
-			PollInterval:   time.Duration(waitPollingInterval) * time.Second,
-			Pending:        []string{client.WaitNotExists},
-			Target:         []string{client.WaitFound},
-			NotFoundChecks: math.MaxInt,
-			Refresh: func() (interface{}, string, error) {
-				output, numEnterpriseAppRoles, err := checkEnterpriseAppRoleExists(ctx, d, c, requestPath)
-				if err != nil {
-					return nil, client.WaitError, err
-				} else if numEnterpriseAppRoles > 1 {
-					err = fmt.Errorf("Filter criteria does not result in a single enterprise app role: %s", getFilterString(d))
-					return nil, client.WaitError, err
-				} else if numEnterpriseAppRoles == 0 {
-					tflog.Warn(ctx, "[WAIT]  Not exists.  Will try again...", "filters", getFilterString(d))
-					return nil, client.WaitNotExists, nil
-				} else {
-					return output, client.WaitFound, nil
-				}
-			},
+	if isDefaultAccess {
+		retVal = &client.EnterpriseAppRole{
+			Id:          client.EnterpriseAppRoleDefaultAccessId,
+			DisplayName: client.EnterpriseAppRoleDefaultAccessName,
+			Description: client.EnterpriseAppRoleDefaultAccessName,
 		}
-		output, err2 := stateConf.WaitForStateContext(context.Background())
-		if output != nil {
-			retVal = output.(*client.EnterpriseAppRole)
-		}
-		err = err2
 	} else {
-		output, numEnterpriseAppRoles, err2 := checkEnterpriseAppRoleExists(ctx, d, c, requestPath)
-		if err2 != nil {
+		c := m.(*client.Client)
+		//app roles do not support searching and filtering so do it manually after reading all roles
+		requestPath := fmt.Sprintf(client.EnterpriseAppRolePath, enterpriseAppId)
+		waitUntilExists := d.Get("wait_until_exists").(bool)
+		waitTimeout := d.Get("wait_timeout").(int)
+		waitPollingInterval := d.Get("wait_polling_interval").(int)
+		var err error
+		if waitUntilExists {
+			stateConf := &resource.StateChangeConf{
+				Timeout:        time.Duration(waitTimeout) * time.Second,
+				PollInterval:   time.Duration(waitPollingInterval) * time.Second,
+				Pending:        []string{client.WaitNotExists},
+				Target:         []string{client.WaitFound},
+				NotFoundChecks: math.MaxInt,
+				Refresh: func() (interface{}, string, error) {
+					output, numEnterpriseAppRoles, err := checkEnterpriseAppRoleExists(ctx, d, c, requestPath)
+					if err != nil {
+						return nil, client.WaitError, err
+					} else if numEnterpriseAppRoles > 1 {
+						err = fmt.Errorf("Filter criteria does not result in a single enterprise app role: %s", getFilterString(d))
+						return nil, client.WaitError, err
+					} else if numEnterpriseAppRoles == 0 {
+						tflog.Warn(ctx, "[WAIT]  Not exists.  Will try again...", map[string]interface{}{"filters": getFilterString(d)})
+						return nil, client.WaitNotExists, nil
+					} else {
+						return output, client.WaitFound, nil
+					}
+				},
+			}
+			output, err2 := stateConf.WaitForStateContext(context.Background())
+			if output != nil {
+				retVal = output.(*client.EnterpriseAppRole)
+			}
 			err = err2
-		} else if numEnterpriseAppRoles != 1 {
-			err = fmt.Errorf("Filter criteria does not result in a single enterprise app role: %s", getFilterString(d))
 		} else {
-			retVal = output
+			output, numEnterpriseAppRoles, err2 := checkEnterpriseAppRoleExists(ctx, d, c, requestPath)
+			if err2 != nil {
+				err = err2
+			} else if numEnterpriseAppRoles != 1 {
+				err = fmt.Errorf("Filter criteria does not result in a single enterprise app role: %s", getFilterString(d))
+			} else {
+				retVal = output
+			}
 		}
-	}
-	if err != nil {
-		d.SetId("")
-		return diag.FromErr(err)
+		if err != nil {
+			d.SetId("")
+			return diag.FromErr(err)
+		}
 	}
 	retVal.EnterpriseAppId = enterpriseAppId
 	d.Set("display_name", retVal.DisplayName)
