@@ -24,6 +24,8 @@ const (
 	ConsistencyLevel         = "ConsistencyLevel"
 	ConsistencyLevelEventual = "eventual"
 	Search                   = "$search"
+	Top                      = "$top"
+	MaxPageSize              = "999"
 	SearchValue              = "\"%s:%s\""
 	Filter                   = "$filter"
 	FilterValue              = "%s eq '%s'"
@@ -101,6 +103,12 @@ func (c *Client) HttpRequest(ctx context.Context, method string, path string, qu
 	req, err := http.NewRequest(method, c.RequestPath(path), body)
 	if err != nil {
 		return nil, &RequestError{StatusCode: http.StatusInternalServerError, Err: err}
+	}
+	if method == http.MethodGet {
+		if query == nil {
+			query = url.Values{}
+		}
+		query[Top] = []string{MaxPageSize}
 	}
 	//Handle query values
 	if query != nil {

@@ -10,5 +10,5 @@ Delete must set Id to empty string
 Update must set Id IF a property used to create Id has been changed
 
 Building:
-    find test -name "*.lock.hcl" -exec rm {} \;
-    go build -o ~/.terraform.d/plugins/github.com/scastria/msgraph/0.1/darwin_arm64/terraform-provider-msgraph
+    mv ~/terraformrc ~/.terraformrc
+    go build -o ~/.go/bin/terraform-provider-msgraph
